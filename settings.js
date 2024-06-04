@@ -1,0 +1,1 @@
+exports.telegramToken = "7438779128:AAGweqH8WHL3ebm1imHEc_5f_SRznyBUeUs"
