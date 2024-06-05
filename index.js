@@ -45,13 +45,10 @@ async function getSubitoJSON()
 async function keepTracking()
 {
     let i = 0
-    // /*
     let adsList = await getSubitoJSON()
     let checkNewObj = adsList.checknew
-    // */
     while(true)
     {   
-        //console.log("Pippo")
         let adsList = await getSubitoJSON()
         let checkNewObj = adsList.checknew
         setTimeout(async ()=>
@@ -61,7 +58,6 @@ async function keepTracking()
                 bot.sendMessage(chatId,"Nuovo annuncio pubblicato")
                 adsList = await getSubitoJSON()
                 checkNewObj = adsList.checknew
-                console.log("pippo")
             }
             else
             {
@@ -80,16 +76,17 @@ bot.onText(/[/]{1}track/,async (msg,match)=>{
     await keepTracking()
 })
 
-
+/*
 bot.onText(/[/]{1}debug/,(msg,match)=>{
     chatId = msg.chat.id
     while(true)
     {
         setTimeout(()=>
         {
-            console.log("pippo")
+            console.log("printdebug")
         },10000)//600000)
     }
 })
+*/
 
 
