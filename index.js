@@ -4,7 +4,7 @@ const telegramBot = require("node-telegram-bot-api")
 //token bot telegram
 class NoToken extends Error{}
 
-const telegramToken = require("./settings").telegramToken
+const telegramToken = require("./.settings").telegramToken
 if(!(telegramToken))
 {
     throw new NoToken("Invalid Telegram Bot Token")
