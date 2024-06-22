@@ -33,30 +33,27 @@ async function getSubitoJSON()
     
 }
 
+/*
 async function keepTracking()
 {
-    let i = 0
     let adsList = await getSubitoJSON()
-    let checkNewObj = adsList.checknew
     while(true)
     {   
-        let adsList = await getSubitoJSON()
-        let checkNewObj = adsList.checknew
         setTimeout(async ()=>
         {
-            if(checkNewObj.newads == true)
+            console.log("newTry")
+            let newAd = await fetch(adsList.checknew)
+            newAd = newAd.json()
+            if(newAd.newads == true)
             {
-                bot.sendMessage(chatId,"Nuovo annuncio pubblicato")
-                adsList = await getSubitoJSON()
-                checkNewObj = adsList.checknew
-            }
-            else
-            {
-                bot.sendMessage(chatId,"Nessun annuncio pubblicato")
-            }
+                return new Promise(async (resolve,reject)=>{
+                    resolve("Nuovo annuncio pubblicato")
+                })
+            }    
         },10000)//600000)
     }
 }
+*/
 
 // ========
 
@@ -64,8 +61,7 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
-
-    //await keepTracking()
+    console.log(await keepTracking())
 })
 
 /*
