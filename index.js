@@ -19,27 +19,18 @@ async function getSubitoJSON()
 {
     //possibile variazione codice, passando url come parametro
     let url = "https://hades.subito.it/v1/search/items?c=43&r=15&ci=5&to=065052&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0"
-    return new Promise((resolve,reject) =>
-    {
-        https.get(url,(res) => {
-
-            let body = "";
-        
-            res.on("data", (chunk) => {
-                body += chunk;
-            });
-        
-            res.on("end", () => {
-                try {
-                    resolve(JSON.parse(body))
-    
-                } catch (error) {
-                    reject(error);
-                };
-            });
-        
-        })
+    return new Promise(async (resolve,reject) => {
+        try
+        {
+            let data = await fetch(url)
+            resolve(data.json())
+        }
+        catch(error)
+        {
+            reject(error)
+        }
     })
+    
 }
 
 async function keepTracking()
@@ -73,7 +64,8 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
-    await keepTracking()
+
+    //await keepTracking()
 })
 
 /*
