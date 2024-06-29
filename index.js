@@ -43,6 +43,7 @@ async function setFirstAds()
 {
     fullListFirstAds = await getSubitoJSON()
     firstAds = fullListFirstAds.ads[0]
+    console.log(`primo id: ${firstAds.urn}`)
 }
 
 async function sendSubitoAlert()
@@ -78,8 +79,10 @@ async function sendSubitoAlert()
 
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
+    let minutes = 15
+    bot.sendMessage(chatId,` Inizio tracking, notifica ogni ${minutes} minuti`)
     setFirstAds()
-    setInterval(sendSubitoAlert, 15 * 60 * 1000)
+    setInterval(sendSubitoAlert, minutes * 60 * 1000)
 })
 
 
