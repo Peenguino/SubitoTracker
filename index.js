@@ -1,3 +1,4 @@
+#!/usr/bin/node
 const https = require("https")
 const telegramBot = require("node-telegram-bot-api")
 const { resolve } = require("path")
