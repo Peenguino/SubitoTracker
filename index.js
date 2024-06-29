@@ -4,7 +4,7 @@ const { resolve } = require("path")
 
 //var resObj
 
-//token bot telegram
+// ======== token bot telegram
 class NoToken extends Error{}
 
 const telegramToken = require("./.settings").telegramToken
@@ -12,6 +12,10 @@ if(!(telegramToken))
 {
     throw new NoToken("Invalid Telegram Bot Token")
 }
+
+// ======== istanza del bot di telegram
+
+let bot = new telegramBot(telegramToken,{polling:true})
 
 // ======== gestione asincrona del tracking 
 
@@ -33,48 +37,50 @@ async function getSubitoJSON()
     
 }
 
-/*
-async function keepTracking()
+let fullListFirstAds, firstAds
+
+async function setFirstAds()
 {
-    let adsList = await getSubitoJSON()
-    while(true)
-    {   
-        setTimeout(async ()=>
+    fullListFirstAds = await getSubitoJSON()
+    firstAds = fullListFirstAds.ads[0]
+}
+
+async function sendSubitoAlert()
+{
+    try
+    {
+        let fullListCurrAds = await getSubitoJSON()
+        currAds = fullListCurrAds.ads[0]
+        // ==
+
+        console.log(`primo id: ${firstAds.urn}`)
+        console.log(`corrente id: ${currAds.urn}`)
+
+        // ==
+        if(firstAds.urn != currAds.urn)
         {
-            console.log("newTry")
-            let newAd = await fetch(adsList.checknew)
-            newAd = newAd.json()
-            if(newAd.newads == true)
-            {
-                return new Promise(async (resolve,reject)=>{
-                    resolve("Nuovo annuncio pubblicato")
-                })
-            }    
-        },10000)//600000)
+            bot.sendMessage(chatId,"Nuovo Annuncio Pubblicato")
+        }
+        else
+        {
+            bot.sendMessage(chatId,"Nessun annuncio nuovo")
+        }
+    }
+    catch(error)
+    {
+        bot.sendMessage(chatId,"Errore nella richiesta all'URL inserito")
+        console.log(error)
     }
 }
-*/
+
 
 // ========
 
-let bot = new telegramBot(telegramToken,{polling:true})
-
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
-    console.log(await keepTracking())
+    setFirstAds()
+    setInterval(sendSubitoAlert, 15 * 60 * 1000)
 })
 
-/*
-bot.onText(/[/]{1}debug/,(msg,match)=>{
-    chatId = msg.chat.id
-    while(true)
-    {
-        setTimeout(()=>
-        {
-            console.log("printdebug")
-        },10000)//600000)
-    }
-})
-*/
 
 
