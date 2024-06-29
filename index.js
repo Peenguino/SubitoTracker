@@ -85,5 +85,9 @@ bot.onText(/[/]{1}track/,async (msg,match)=>{
     setInterval(sendSubitoAlert, minutes * 60 * 1000)
 })
 
+bot.onText(/[/]{1}hello/,async (msg,match)=>{
+    chatId = msg.chat.id
+    bot.sendMessage(chatId,`Hello World!`)
+})
 
 
