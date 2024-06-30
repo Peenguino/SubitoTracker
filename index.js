@@ -44,7 +44,7 @@ async function setFirstAds()
 {
     fullListFirstAds = await getSubitoJSON()
     firstAds = fullListFirstAds.ads[0]
-    console.log(`primo id: ${firstAds.urn}`)
+    console.log(`start id: ${firstAds.urn}`)
 }
 
 async function sendSubitoAlert()
@@ -53,36 +53,43 @@ async function sendSubitoAlert()
     {
         let fullListCurrAds = await getSubitoJSON()
         currAds = fullListCurrAds.ads[0]
+        //console.log(currAds)
+
         // ==
 
-        console.log(`primo id: ${firstAds.urn}`)
+        console.log(`precedente id: ${firstAds.urn}`)
         console.log(`corrente id: ${currAds.urn}`)
 
         // ==
         if(firstAds.urn != currAds.urn)
         {
-            bot.sendMessage(chatId,"Nuovo Annuncio Pubblicato")
+            bot.sendMessage(chatId,"Nuovo annuncio pubblicato")
         }
         else
         {
             bot.sendMessage(chatId,"Nessun annuncio nuovo")
         }
+
+        firstAds = currAds
     }
     catch(error)
     {
-        bot.sendMessage(chatId,"Errore nella richiesta all'URL inserito")
+        bot.sendMessage(chatId,"Errore")
         console.log(error)
     }
 }
 
-
-// ========
+// ======== COMANDI DISPONIBILI
 
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
-    let minutes = 15
-    bot.sendMessage(chatId,` Inizio tracking, notifica ogni ${minutes} minuti`)
+    let minutes = 20
+    bot.sendMessage(chatId,`Inizio tracking, notifica ogni ${minutes} minuti`)
+    //setta il primo
     setFirstAds()
+    //notifica per la prima volta
+    sendSubitoAlert()
+    //loop
     setInterval(sendSubitoAlert, minutes * 60 * 1000)
 })
 
