@@ -65,10 +65,6 @@ async function sendSubitoAlert()
         {
             bot.sendMessage(chatId,"Nuovo annuncio pubblicato")
         }
-        else
-        {
-            bot.sendMessage(chatId,"Nessun annuncio nuovo")
-        }
 
         firstAds = currAds
     }
@@ -83,8 +79,8 @@ async function sendSubitoAlert()
 
 bot.onText(/[/]{1}track/,async (msg,match)=>{
     chatId = msg.chat.id
-    let minutes = 20
-    bot.sendMessage(chatId,`Inizio tracking, notifica ogni ${minutes} minuti`)
+    let minutes = 10
+    bot.sendMessage(chatId,`Inizio tracking, controllo nuovo annuncio ogni ${minutes} minuti`)
     //setta il primo
     setFirstAds()
     //notifica per la prima volta
