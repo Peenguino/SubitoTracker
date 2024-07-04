@@ -19,9 +19,7 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 // ======== lista dei track già effettuati
 
-let trackedList = {
-    fisciano: "https://hades.subito.it/v1/search/items?c=43&r=15&ci=5&to=065052&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0"
-}
+let trackedList = require("./trackedList.json")
 
 // ======== gestione asincrona del tracking 
 
