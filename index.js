@@ -21,6 +21,26 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 let trackedList = require("./trackedList.json")
 
+// ======== filtro annunci spam
+
+let spamList = require("./spamList.json")
+
+
+function spamFilter(cityName,currStr)
+{
+    let spamStr1 = currStr.replace(/\s+/g, '').toLowerCase(), spamStr2 = spamList[cityName].replace(/\s+/g, '').toLowerCase()
+
+    //chiamata effettuata nella funzione sendSubitoAlert
+    if(spamStr1 == spamStr2)
+    {
+        return "spam"
+    }
+    else
+    {
+        return "notSpam"
+    }
+}
+
 // ======== gestione asincrona del tracking 
 
 async function getSubitoJSON(url)
@@ -67,7 +87,15 @@ async function sendSubitoAlert()
         console.log(`precedente id: ${firstAds.urn}`)
         console.log(`corrente id: ${currAds.urn}`)
 
-        if(firstAds.urn != currAds.urn)
+        //controllo spam, tramite chiamata a funzione apposita
+        let city = currAds.geo.city.value.toLowerCase(), isSpam = "notSpam"
+        if(city in spamList)
+        {
+            //controlla il body (descrizione annuncio), body ricorrenti in annunci spam noti
+            isSpam = spamFilter(city,currAds.body.slice(0,351))
+        }
+
+        if(firstAds.urn != currAds.urn && isSpam == "notSpam")
         {
             bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
             //url del nuovo annuncio
@@ -95,7 +123,7 @@ bot.onText(/[/]{1}help$/,async (msg,match)=>{
     bot.sendMessage(chatId,"I comandi disponibili sono: ")
     bot.sendMessage(chatId,"/hello, hello world!")
     bot.sendMessage(chatId,"/startTrack [nome locazione nella lista], effettua un track effettuando dei controlli periodici alla locazione passata come parametro")
-    bot.sendMessage(chatId,"/trackedList, restituisce una lista di locazioni e relativi URL trackati in passato")
+    bot.sendMessage(chatId,"/trackedList, restituisce una lista di locazioni disponibili al tracking")
     bot.sendMessage(chatId,"/stopTrack, interrompe il corrente tracking")
 })
 bot.onText(/[/]{1}startTrack/,async (msg,match)=>{
