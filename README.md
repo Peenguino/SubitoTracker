@@ -1,7 +1,9 @@
-#Repository of the Telegram Bot subitoHouseTracker
+# subitoHouseTracker
 
-What **subitoHouseTracker** does?
+* What is subitoHouseTracker?
 
-The bot tracks houses ads on Subito and notifies the user when there is new ad on the location tracked.
+subitoHouseTracker is a bot that tracks houses ads on Subito and notifies the user when there is a new ad on the location tracked.
 
-Go to subitoHouseTracker [on Telegram] (https://t.me/subitoHouseTracker_bot)
+* Links
+
+Go to subitoHouseTracker [on Telegram](https://t.me/subitoHouseTracker_bot)
