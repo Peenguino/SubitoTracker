@@ -3,4 +3,3 @@ node_modules/
 package-lock.json
 .serverDebug.js
 .windowScrape.js
-trackedList.json
