@@ -1,6 +1,6 @@
-# SubitoTracker
+# SubitoTracking
 
-## What is SubitoTracker?
+## What is SubitoTracking?
 
 SubitoTracker is a bot that tracks houses ads on [Subito](https://www.subito.it/) and notifies the user when there is a new ad on the location tracked.
 
@@ -14,4 +14,4 @@ This bot will track only the main 3 queries that the website allows. It will tra
 
 ## Links
 
-Go to SubitoTracker [on Telegram](https://t.me/subitoHouseTracker_bot)
+Go to SubitoTracking [on Telegram](https://t.me/subitoTracking_bot)
