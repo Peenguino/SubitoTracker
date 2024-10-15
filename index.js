@@ -2,6 +2,7 @@ const https = require("https")
 const telegramBot = require("node-telegram-bot-api")
 const puppeteer = require("puppeteer-core")
 const { resolve } = require("path")
+const { rejects } = require("assert")
 
 //var resObj
 
@@ -22,7 +23,7 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 class URL_Error extends Error{}
 
-var currentGlobalQueryURL="empty", shippingValue = "false";
+var currentGlobalQueryURL="", shippingValue = "false";
 
 async function getWindowObj(inputUrl) {
     return new Promise(async (resolve, reject) => {
@@ -122,47 +123,48 @@ let fullListFirstAds, firstAds, intervalID;
 
 async function setFirstAds()
 {
-    if(currentGlobalQueryURL!="empty")
-    {
-        fullListFirstAds = await getSubitoJSON(currentGlobalQueryURL)
-    }
-    else
-    {
-        throw(Error("Errore con l'URL inserito"))
-    }
-    setTimeout(()=>undefined,3000)
+    return new Promise(async (resolve,rejects)=>{
+        try
+        {
+            fullListFirstAds = await getSubitoJSON(currentGlobalQueryURL)
+        }
+        catch(error)
+        {
+            rejects(error)
+        }
+    })
 
-    firstAds = fullListFirstAds.ads[0]
-    console.log(`start id: ${firstAds.urn}`)
 }
 
 async function sendSubitoAlert()
 {
-    try
+    return new Promise(async (resolve,rejects)=>
     {
-        let fullListCurrAds = await getSubitoJSON(currentGlobalQueryURL)
-        currAds = fullListCurrAds.ads[0]
-    
-        console.log(`precedente id: ${firstAds.urn}`)
-        console.log(`corrente id: ${currAds.urn}`)
-
-        if(firstAds.urn != currAds.urn)
+        try
         {
-            bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
-            //url del nuovo annuncio
-            bot.sendMessage(chatId,currAds.urls.default)
+            let fullListCurrAds = await getSubitoJSON(currentGlobalQueryURL)
+            currAds = fullListCurrAds.ads[0]
+        
+            console.log(`precedente id: ${firstAds.urn}`)
+            console.log(`corrente id: ${currAds.urn}`)
+    
+            if(firstAds.urn != currAds.urn)
+            {
+                bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
+                //url del nuovo annuncio
+                bot.sendMessage(chatId,currAds.urls.default)
+            }
+    
+            firstAds = currAds
         }
-
-        firstAds = currAds
-    }
-    catch(error)
-    {
-        //bot.sendMessage(chatId,"Errore")
-        console.log(error)
-    }
+        catch(error)
+        {
+            rejects(error)
+        }
+    })
 }
 
-let userInput = null
+let userInput = "empty"
 
 // ======== COMANDI DISPONIBILI
 
@@ -187,21 +189,19 @@ bot.onText(/[/]{1}startTrack/,async (msg,match)=>{
 
     let index = msg.text.search(/\s+/)
     userInput = msg.text.slice(index+1).trim()
-    if(userInput == null)
-    {
-        bot.sendMessage(chatId,"Errore! Riprova l'inserimento dell'url")
-        return
-    }
-    bot.sendMessage(chatId,`Attendi...`)
-    currentGlobalQueryURL = await mapQueryParams(userInput)    
+    bot.sendMessage(chatId,`Attendi...`)    
     try
     {
+        currentGlobalQueryURL = await mapQueryParams(userInput)
+
+        //setta il primo
+        await setFirstAds(currentGlobalQueryURL)
+        //notifica per la prima volta
+        await sendSubitoAlert(currentGlobalQueryURL)
+
         bot.sendMessage(chatId,`Inizio tracking, controllo nuovo annuncio ogni ${minutes} minuti`)
         bot.sendMessage(chatId,`Inizio tracking dell url ${userInput}`)
-        //setta il primo
-        setFirstAds(currentGlobalQueryURL)
-        //notifica per la prima volta
-        sendSubitoAlert(currentGlobalQueryURL)
+        
         //start loop e relativo id
         intervalID = setInterval(sendSubitoAlert, minutes * 60 * 1000)
     }
@@ -209,7 +209,7 @@ bot.onText(/[/]{1}startTrack/,async (msg,match)=>{
     {
         console.log(e)
         bot.sendMessage(chatId,"Errore")
-        bot.sendMessage(chatId,"Riprova l'inserimento dell'URL: ")
+        bot.sendMessage(chatId,"Riprova l'inserimento dell'URL")
     }
 })
 
@@ -218,7 +218,7 @@ bot.onText(/[/]{1}stopTrack$/,async (msg,match)=>{
     if(intervalID)
     {
         clearInterval(intervalID)
-        currentGlobalQueryURL = "empty"
+        currentGlobalQueryURL = ""
         bot.sendMessage(chatId,`Tracking interrotto`)
     }
     else
@@ -246,3 +246,7 @@ bot.onText(/[/]{1}test$/,async (msg,match)=>{
 
 
 
+// va gestito tutto in ritorni di promise, per fare in modo che tutte le funzioni possano propagare errori e non
+// interrompere mai il flusso di richieste all'utente
+
+// quindi vanno convertite setFirstAds con ritorno a promise e sendSubitoAlert allo stesso modo
