@@ -1,8 +1,0 @@
-{
-    "fisciano": "https://hades.subito.it/v1/search/items?c=43&r=15&ci=5&to=065052&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0",
-    "pisa": "https://hades.subito.it/v1/search/items?c=43&r=9&ci=7&to=050026&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0",
-    "napoli": "https://hades.subito.it/v1/search/items?c=43&r=15&ci=4&to=063049&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0",
-    "perugia": "https://hades.subito.it/v1/search/items?c=43&r=10&ci=1&to=054039&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0",
-    "roma": "https://hades.subito.it/v1/search/items?c=43&r=11&ci=4&to=058091&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0",
-    "milano":"https://hades.subito.it/v1/search/items?c=43&r=4&ci=8&to=015146&t=u&qso=false&shp=false&urg=false&sort=datedesc&lim=30&start=0"
-}

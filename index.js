@@ -1,5 +1,6 @@
 const https = require("https")
 const telegramBot = require("node-telegram-bot-api")
+const puppeteer = require("puppeteer")
 const { resolve } = require("path")
 
 //var resObj
@@ -21,36 +22,93 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 let trackedList = require("./trackedList.json")
 
-// ======== filtro annunci spam
+class URL_Error extends Error{}
 
-let spamList = require("./spamList.json")
+var currentGlobalQueryURL="empty", shippingValue = "false";
 
+async function getWindowObj(inputUrl) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const browser = await puppeteer.launch(
+                /*{ channel: "chrome" }
+                {executablePath:"/snap/bin/chromium",
+                headless: false,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']}
+                */
+            )
+            const page = await browser.newPage()
 
-function spamFilter(cityName,currStr)
-{
-    let spamStr1 = currStr.replace(/\s+/g, '').toLowerCase(), spamStr2 = spamList[cityName].replace(/\s+/g, '').toLowerCase()
+            await page.goto(inputUrl)
+            
 
-    //chiamata effettuata nella funzione sendSubitoAlert
-    if(spamStr1 == spamStr2)
-    {
-        return "spam"
+            let subitoQueryOBJ = await page.evaluate(() => {
+                return window.subito.dataLayer._modelsMap.search
+            })
+            await browser.close()
+
+            resolve(subitoQueryOBJ)
+        }
+        catch (error) {
+            reject(error)
+        }
     }
-    else
-    {
-        return "notSpam"
-    }
+    )
 }
+
+async function mapQueryParams(inputUrl) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryObj = await getWindowObj(inputUrl)
+            //console.dir(queryObj, { depth: 100 })
+            let queryParams = { 
+                // --- QUERY
+                "q": (queryObj.query != '')? queryObj.query : null, 
+                "c": (queryObj.category.parent.id != '0')? queryObj.category.child.id: null, 
+                // --- GEO
+                "ci": queryObj.geo.city? queryObj.geo.city.id : null, 
+                "r": queryObj.geo.region? queryObj.geo.region.id:null, 
+                "to":queryObj.geo.town? queryObj.geo.town.id:null, 
+                // --- SORT (tracking, sempre ordinato dal più recente al meno recente)
+                "sort":'datedesc',
+                //"sort":queryObj.sort? queryObj.sort.id:'datedesc',
+                // --- PARAMETRI NON COMUNI A TUTTE LE CATEGORIE
+                "urg":'false',
+                "shp":'false',
+                "qso":'false'
+                }
+
+                //console.dir(queryParams,{depth:10})
+                let queryPrefix = "https://hades.subito.it/v1/search/items?", paramsString="", queryString="";
+                for(let key in queryParams)
+                {
+                    if(queryParams[key]!=null)
+                    {
+                        paramsString += "&" +key+ "=" + queryParams[key]
+                    }
+                }
+
+                //setto di default qso, shp, urg a false non essendo parametri essenziali
+
+                queryString = queryPrefix + paramsString.slice(1) + "&qso=false&shp=false&urg=false&lim=30&start=0";
+                //console.log(queryString)
+            resolve(queryString)
+        }
+        catch (error) {
+            reject(error)
+        }
+    })
+
+}
+
 
 // ======== gestione asincrona del tracking 
 
-async function getSubitoJSON(url)
+async function getSubitoJSON()
 {
-    //possibile variazione codice, passando url come parametro
-    //let url = 
     return new Promise(async (resolve,reject) => {
         try
         {
-            let data = await fetch(url)
+            let data = await fetch(currentGlobalQueryURL)
             resolve(data.json())
         }
         catch(error)
@@ -61,13 +119,13 @@ async function getSubitoJSON(url)
     
 }
 
-let fullListFirstAds, firstAds,  currentURL = "?", intervalID;
+let fullListFirstAds, firstAds, intervalID;
 
 async function setFirstAds()
 {
-    if(currentURL != "?")
+    if(currentGlobalQueryURL!="empty")
     {
-        fullListFirstAds = await getSubitoJSON(currentURL)
+        fullListFirstAds = await getSubitoJSON(currentGlobalQueryURL)
     }
     else
     {
@@ -81,21 +139,13 @@ async function sendSubitoAlert()
 {
     try
     {
-        let fullListCurrAds = await getSubitoJSON(currentURL)
+        let fullListCurrAds = await getSubitoJSON(currentGlobalQueryURL)
         currAds = fullListCurrAds.ads[0]
     
         console.log(`precedente id: ${firstAds.urn}`)
         console.log(`corrente id: ${currAds.urn}`)
 
-        //controllo spam, tramite chiamata a funzione apposita
-        let city = currAds.geo.city.value.toLowerCase(), isSpam = "notSpam"
-        if(city in spamList)
-        {
-            //controlla il body (descrizione annuncio), body ricorrenti in annunci spam noti
-            isSpam = spamFilter(city,currAds.body.slice(0,351))
-        }
-
-        if(firstAds.urn != currAds.urn && isSpam == "notSpam")
+        if(firstAds.urn != currAds.urn)
         {
             bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
             //url del nuovo annuncio
@@ -111,6 +161,8 @@ async function sendSubitoAlert()
     }
 }
 
+let userInput = null
+
 // ======== COMANDI DISPONIBILI
 
 bot.onText(/[/]{1}start$/,async (msg,match)=>{
@@ -121,38 +173,37 @@ bot.onText(/[/]{1}start$/,async (msg,match)=>{
 bot.onText(/[/]{1}help$/,async (msg,match)=>{
     chatId = msg.chat.id
     bot.sendMessage(chatId,"I comandi disponibili sono: ")
-    bot.sendMessage(chatId,"/hello, hello world!")
-    bot.sendMessage(chatId,"/startTrack [nome locazione nella lista], effettua un track effettuando dei controlli periodici alla locazione passata come parametro")
-    bot.sendMessage(chatId,"/trackedList, restituisce una lista di locazioni disponibili al tracking")
+    bot.sendMessage(chatId,"/startTrack [url], effettua un track effettuando dei controlli periodici all'url passato come parametro")
     bot.sendMessage(chatId,"/stopTrack, interrompe il corrente tracking")
+    bot.sendMessage(chatId,"/infoTrack, restituisce informazioni riguardo il corrente tracking attivo")
+
 })
 bot.onText(/[/]{1}startTrack/,async (msg,match)=>{
     chatId = msg.chat.id
-    let minutes = 10
+    let minutes = 8
 
     //console.log(msg)
 
-    //gestione dizionario locazioni trackate
     let index = msg.text.search(/\s+/)
-    let currentPlace = msg.text.slice(index+1).toLowerCase().trim()
-    
-    if(currentPlace in trackedList)
+    userInput = msg.text.slice(index+1).trim()
+    bot.sendMessage(chatId,`Attendi...`)
+    currentGlobalQueryURL = await mapQueryParams(userInput)    
+    try
     {
-        //url nel dizionario delle chiavi
-        currentURL = trackedList[currentPlace]
-
         bot.sendMessage(chatId,`Inizio tracking, controllo nuovo annuncio ogni ${minutes} minuti`)
+        bot.sendMessage(chatId,`Inizio tracking dell url ${userInput}`)
         //setta il primo
-        setFirstAds()
+        setFirstAds(currentGlobalQueryURL)
         //notifica per la prima volta
-        sendSubitoAlert()
+        sendSubitoAlert(currentGlobalQueryURL)
         //start loop e relativo id
         intervalID = setInterval(sendSubitoAlert, minutes * 60 * 1000)
     }
-    else
+    catch(e)
     {
-        bot.sendMessage(chatId,"Non hai inserito una locazione presente nella lista.")
-        bot.sendMessage(chatId,"Consulta la lista delle locazioni già disponibili con /trackedList")
+        console.log(e)
+        bot.sendMessage(chatId,"Errore")
+        bot.sendMessage(chatId,"Riprova l'inserimento dell'URL: ")
     }
 })
 
@@ -161,6 +212,7 @@ bot.onText(/[/]{1}stopTrack$/,async (msg,match)=>{
     if(intervalID)
     {
         clearInterval(intervalID)
+        currentGlobalQueryURL = "empty"
         bot.sendMessage(chatId,`Tracking interrotto`)
     }
     else
@@ -169,15 +221,22 @@ bot.onText(/[/]{1}stopTrack$/,async (msg,match)=>{
     }
 })
 
-bot.onText(/[/]{1}hello$/,async (msg,match)=>{
+bot.onText(/[/]{1}infoTrack$/,async (msg,match)=>{
     chatId = msg.chat.id
-    bot.sendMessage(chatId,`Hello World!`)
+    if(intervalID && userInput != null)
+    {
+        bot.sendMessage(chatId,`Attualmente stai trackando: ${userInput}`)
+    }
+    else
+    {
+        bot.sendMessage(chatId,`Nessun tracking in corso`)
+    }
 })
 
-bot.onText(/[/]{1}trackedList$/,async (msg,match)=>{
+bot.onText(/[/]{1}test$/,async (msg,match)=>{
     chatId = msg.chat.id
-    let output = Object.keys(trackedList).toString()
-    bot.sendMessage(chatId,output)
+    bot.sendMessage(chatId,`test`)
 })
+
 
 
