@@ -1,6 +1,6 @@
 const https = require("https")
 const telegramBot = require("node-telegram-bot-api")
-const puppeteer = require("puppeteer")
+const puppeteer = require("puppeteer-core")
 const { resolve } = require("path")
 
 //var resObj
@@ -28,7 +28,8 @@ async function getWindowObj(inputUrl) {
     return new Promise(async (resolve, reject) => {
         try {
             const browser = await puppeteer.launch(
-                /*{ channel: "chrome" }
+                { channel: "chrome" }
+                /*
                 {executablePath:"/snap/bin/chromium",
                 headless: false,
                 args: ['--no-sandbox', '--disable-setuid-sandbox']}
