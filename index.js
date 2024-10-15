@@ -126,7 +126,9 @@ async function setFirstAds()
     return new Promise(async (resolve,rejects)=>{
         try
         {
-            fullListFirstAds = await getSubitoJSON(currentGlobalQueryURL)
+            resolve(async ()=>{
+                fullListFirstAds = await getSubitoJSON(currentGlobalQueryURL)
+            })
         }
         catch(error)
         {
@@ -142,20 +144,22 @@ async function sendSubitoAlert()
     {
         try
         {
-            let fullListCurrAds = await getSubitoJSON(currentGlobalQueryURL)
-            currAds = fullListCurrAds.ads[0]
+            resolve(async ()=>{
+                let fullListCurrAds = await getSubitoJSON(currentGlobalQueryURL)
+                currAds = fullListCurrAds.ads[0]
+            
+                console.log(`precedente id: ${firstAds.urn}`)
+                console.log(`corrente id: ${currAds.urn}`)
         
-            console.log(`precedente id: ${firstAds.urn}`)
-            console.log(`corrente id: ${currAds.urn}`)
-    
-            if(firstAds.urn != currAds.urn)
-            {
-                bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
-                //url del nuovo annuncio
-                bot.sendMessage(chatId,currAds.urls.default)
-            }
-    
-            firstAds = currAds
+                if(firstAds.urn != currAds.urn)
+                {
+                    bot.sendMessage(chatId,`Nuovo annuncio pubblicato in data: ${currAds.dates.display}`)
+                    //url del nuovo annuncio
+                    bot.sendMessage(chatId,currAds.urls.default)
+                }
+        
+                firstAds = currAds
+                })
         }
         catch(error)
         {
