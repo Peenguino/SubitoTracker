@@ -20,8 +20,6 @@ let bot = new telegramBot(telegramToken,{polling:true})
 
 // ======== lista dei track già effettuati
 
-let trackedList = require("./trackedList.json")
-
 class URL_Error extends Error{}
 
 var currentGlobalQueryURL="empty", shippingValue = "false";
