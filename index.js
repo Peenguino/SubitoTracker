@@ -130,6 +130,8 @@ async function setFirstAds()
     {
         throw(Error("Errore con l'URL inserito"))
     }
+    setTimeout(()=>undefined,3000)
+
     firstAds = fullListFirstAds.ads[0]
     console.log(`start id: ${firstAds.urn}`)
 }
@@ -185,6 +187,11 @@ bot.onText(/[/]{1}startTrack/,async (msg,match)=>{
 
     let index = msg.text.search(/\s+/)
     userInput = msg.text.slice(index+1).trim()
+    if(userInput == null)
+    {
+        bot.sendMessage(chatId,"Errore! Riprova l'inserimento dell'url")
+        return
+    }
     bot.sendMessage(chatId,`Attendi...`)
     currentGlobalQueryURL = await mapQueryParams(userInput)    
     try
